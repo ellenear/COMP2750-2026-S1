@@ -31,7 +31,7 @@ messageArea.textContent = "Sign in successful. Welcome, " + user.email + ".";
 messageArea.style.color = "green";
 
 setTimeout(function () {
-window.location.href = "welcome.html";
+window.location.href = "index.html";
 }, 1500);
 
 } catch (error) {

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Listings</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="container">
+
+                <span class="navbar-brand">
+                    Campus Marketplace
+                </span>
+
+                <button class="btn btn-outline-dark" id="signOutBtn">
+                    Sign Out
+                </button>
+
+            </div>
+        </nav>
+
+        <!-- Page Title -->
+        <h1>My Listings</h1>
+
+        <p>
+            View all items you have listed for sale.
+        </p>
+
+        <!-- Back Button -->
+        <a href="index.html">
+            <button class="btn btn-secondary mb-4">
+                Back to Welcome Page
+            </button>
+        </a>
+
+        <!-- Listings -->
+        <div class="row" id="listingsContainer"></div>
+
+        <!-- Empty Message -->
+        <p id="emptyMessage" class="text-muted"></p>
+
+    </div>
+
+    <script type="module" src="mylistings.js"></script>
+
+</body>
+</html>
