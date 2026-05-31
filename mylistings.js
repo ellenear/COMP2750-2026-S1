@@ -1,166 +1,95 @@
-// Firebase imports
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import {
-    getAuth,
-    onAuthStateChanged,
-    signOut
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
+  getAuth,
+  onAuthStateChanged,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import {
-    getFirestore,
-    collection,
-    query,
-    where,
-    getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  getFirestore,
+  collection,
+  getDocs,
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-
-// Firebase config
 const firebaseConfig = {
-    apiKey: "AIzaSyDsmzCtW5ADthBJv_PNdz_trDb8BSn8WL0",
-    authDomain: "campus-marketplace-70b95.firebaseapp.com",
-    projectId: "campus-marketplace-70b95",
-    storageBucket: "campus-marketplace-70b95.firebasestorage.app",
-    messagingSenderId: "1017814633308",
-    appId: "1:1017814633308:web:25463e96717e7e024fcf99"
+  apiKey: "AIzaSyDsmzCtW5ADthBJv_PNdz_trDb8BSn8WL0",
+  authDomain: "campus-marketplace-70b95.firebaseapp.com",
+  projectId: "campus-marketplace-70b95",
+  storageBucket: "campus-marketplace-70b95.appspot.com",
+  messagingSenderId: "1017814633308",
+  appId: "1:1017814633308:web:25463e96717e7e024fcf99",
 };
 
-
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
-
 const db = getFirestore(app);
 
-
-// HTML elements
 const listingsContainer = document.getElementById("listingsContainer");
-
 const emptyMessage = document.getElementById("emptyMessage");
 
-const signOutBtn = document.getElementById("signOutBtn");
-
-
-// Authentication check
+// Redirect if not logged in
 onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
 
-    // Redirect if not signed in
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
-
-    // Load listings
-    loadMyListings(user);
+  loadMyListings(user);
 });
 
-
-// Load current user's items
+// Load only current user's listings
 async function loadMyListings(user) {
+  listingsContainer.innerHTML = "";
+  emptyMessage.textContent = "";
 
-    listingsContainer.innerHTML = "";
+  const itemsRef = collection(db, "Items");
+  const snapshot = await getDocs(itemsRef);
 
-    try {
+  let found = false;
 
-        // Reference to items collection
-        const itemsRef = collection(db, "items");
+  snapshot.forEach((docSnap) => {
+    const item = docSnap.data();
 
-        // Query only current user's listings
-        const q = query(
-            itemsRef,
-            where("sellerId", "==", user.uid)
-        );
+    // Only show items where seller matches current user
+    if (item.seller !== user.email) return;
 
-        const querySnapshot = await getDocs(q);
+    found = true;
 
-        // No items
-        if (querySnapshot.empty) {
-            emptyMessage.textContent =
-                "You have not listed any items yet.";
-            return;
-        }
+    // FIXED: Price already includes "$"
+    const price = item.price;
 
-        // Display items
-        querySnapshot.forEach((doc) => {
+    const card = document.createElement("div");
+    card.className = "col-md-4 mb-4";
 
-            const item = doc.data();
+    card.innerHTML = `
+      <div class="card h-100 shadow-sm">
+        <img 
+          src="${item.image}" 
+          class="card-img-top"
+          alt="${item.name}"
+          style="height:250px; object-fit:cover;"
+        >
 
-            // Price display
-            const price =
-                item.trade === true
-                    ? "Trade"
-                    : `$${item.price}`;
+        <div class="card-body">
+          <h5 class="card-title">${item.name}</h5>
+          <p class="card-text">${item.description || ""}</p>
 
-            // Card
-            const card = document.createElement("div");
+          <p><strong>Price:</strong> ${price}</p>
+          <p><strong>Category:</strong> ${item.category}</p>
+          <p><strong>Seller:</strong> ${user.email}</p>
+        </div>
+      </div>
+    `;
 
-            card.className = "col-md-4 mb-4";
+    listingsContainer.appendChild(card);
+  });
 
-            card.innerHTML = `
-                <div class="card h-100">
-
-                    <img 
-                        src="${item.image}" 
-                        class="card-img-top"
-                        alt="${item.name}"
-                        style="height:250px; object-fit:cover;"
-                    >
-
-                    <div class="card-body">
-
-                        <h5 class="card-title">
-                            ${item.name}
-                        </h5>
-
-                        <p class="card-text">
-                            ${item.description}
-                        </p>
-
-                        <p>
-                            <strong>Price:</strong>
-                            ${price}
-                        </p>
-
-                        <p>
-                            <strong>Category:</strong>
-                            ${item.category}
-                        </p>
-
-                        <p>
-                            <strong>Seller:</strong>
-                            ${user.email}
-                        </p>
-
-                    </div>
-                </div>
-            `;
-
-            listingsContainer.appendChild(card);
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        emptyMessage.textContent =
-            "Failed to load listings.";
-    }
+  if (!found) {
+    emptyMessage.textContent = "You have not listed any items yet.";
+  }
 }
 
-
 // Sign out
-signOutBtn.addEventListener("click", async () => {
-
-    try {
-
-        await signOut(auth);
-
-        window.location.href = "login.html";
-
-    } catch (error) {
-
-        console.error("Sign out error:", error);
-    }
+document.getElementById("signOutBtn").addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.href = "login.html";
 });
